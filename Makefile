@@ -6,12 +6,14 @@ test:
 	go test -v ./...
 
 ## generate coverage + html
-htmlcoverage: make-coverage-path
+htmlcoverage:
+	@mkdir -p coverage
 	go test -coverprofile=coverage/coverage.out ./...
 	go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
 ## generate coverage + func output
-coverage: make-coverage-path
+coverage:
+	@mkdir -p coverage
 	go test -coverprofile=coverage/coverage.out ./...
 	go tool cover -func=coverage/coverage.out 
 
@@ -19,11 +21,8 @@ coverage: make-coverage-path
 bench:
 	go test -bench=. ./...
 
-make-coverage-path:
-	@mkdir -p coverage
-
 ## clean
 clean:
 	rm -rf coverage
 
-.PHONY: make-coverage-path test clean coverage bench
+.PHONY: all test clean coverage htmlcoverage bench

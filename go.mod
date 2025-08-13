@@ -1,3 +1,5 @@
-module example.com/go_module
+module github.com/makadev/go-config
 
-go 1.24.3
+go 1.24.5
+
+require gopkg.in/yaml.v3 v3.0.1
