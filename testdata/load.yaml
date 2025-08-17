@@ -1,0 +1,5 @@
+app_name: "SampleApp"
+app_url: "http://localhost"
+server:
+  host: "localhost"
+  port: 8080

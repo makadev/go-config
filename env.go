@@ -10,33 +10,27 @@ import (
 )
 
 // loadFromEnv loads values from environment variables into the config struct
-func loadFromEnv(configStruct interface{}, metadata map[string]*FieldInfo, envPrefix string) error {
-	structValue := reflect.ValueOf(configStruct).Elem()
-
-	for fieldPath, info := range metadata {
-		if info.EnvVar == "" {
-			continue // No environment variable specified for this field
+func (c *Config[T]) loadFromEnv() error {
+	for envVar, info := range c.Metadata.EnvMap {
+		envKey := envVar
+		if c.Options.EnvPrefix != "" {
+			envKey = c.Options.EnvPrefix + envKey
 		}
 
-		envKey := info.EnvVar
-		if envPrefix != "" {
-			envKey = envPrefix + "_" + envKey
-		}
-
-		envValue := os.Getenv(envKey)
-		if envValue == "" {
+		envValue, ok := os.LookupEnv(envKey)
+		if !ok {
 			continue // Environment variable not set
 		}
 
 		// Get the field to set
-		field, err := getFieldByPath(structValue, fieldPath, true)
+		field, err := c.getFieldByPath(info.FieldPath, true)
 		if err != nil {
-			return fmt.Errorf("failed to get field %s: %w", fieldPath, err)
+			return fmt.Errorf("failed to get field %s: %w", info.FieldPath, err)
 		}
 
 		// Convert and set the value
-		if err := setFieldFromString(field, envValue, info.Type); err != nil {
-			return fmt.Errorf("failed to set field %s from env var %s: %w", fieldPath, envKey, err)
+		if err := setFieldFromString(field, envValue, info.StructField.Type); err != nil {
+			return fmt.Errorf("failed to set field %s from env var %s: %w", info.FieldPath, envKey, err)
 		}
 	}
 
@@ -58,7 +52,7 @@ func setFieldFromString(field reflect.Value, value string, fieldType reflect.Typ
 		field.SetString(value)
 
 	case reflect.Bool:
-		boolVal, err := parseBool(value)
+		boolVal, err := ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("invalid boolean value %q: %w", value, err)
 		}
@@ -113,18 +107,6 @@ func setFieldFromString(field reflect.Value, value string, fieldType reflect.Typ
 	}
 
 	return nil
-}
-
-// parseBool parses a string to boolean with support for various formats
-func parseBool(s string) (bool, error) {
-	switch strings.ToLower(s) {
-	case "true", "t", "yes", "y", "1", "on":
-		return true, nil
-	case "false", "f", "no", "n", "0", "off", "":
-		return false, nil
-	default:
-		return false, fmt.Errorf("invalid boolean format")
-	}
 }
 
 // setSliceFromString parses a comma-separated string into a slice

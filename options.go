@@ -9,6 +9,10 @@ type Options struct {
 	// EnvPrefix adds a prefix to all environment variable names
 	EnvPrefix string
 
+	// AutoEnv enables automatic environment variable loading by mangling the config key
+	// f.e. "server.port" -> EnvPrefix + "SERVER_PORT"
+	AutoEnv bool
+
 	// SkipEnv disables environment variable loading
 	SkipEnv bool
 
@@ -20,6 +24,9 @@ type Options struct {
 
 	// String to use for secret masking
 	SecretWith string
+
+	// Configuration Tags to check
+	ConfigTags []string
 }
 
 func NewOptions() *Options {
@@ -30,7 +37,14 @@ func NewOptions() *Options {
 		SkipFiles:   false,
 		Secret:      true,
 		SecretWith:  "[REDACTED]",
+		ConfigTags:  DefaultConfigTag,
 	}
+}
+
+var DefaultConfigTag = []string{
+	"config",
+	"yaml",
+	"json",
 }
 
 // DefaultConfigPaths defines the default order of configuration file loading

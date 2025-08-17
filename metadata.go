@@ -1,51 +1,66 @@
 package config
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 )
 
 // FieldInfo contains metadata about a struct field
 type FieldInfo struct {
-	// FieldPath is the dot-separated path to the field (e.g., "server.port")
+	// FieldPath is the dot-separated path to the field using struct field names
+	// f.e. "Server.Port"
 	FieldPath string
 
-	// ConfigKey is the key used in configuration files
+	// ConfigKey is the full key used to reference the field inside the config using configured config key names
+	// f.e. "server.port"
 	ConfigKey string
+
+	// ConfigName is the key used in configuration files
+	// f.e. "port"
+	ConfigName string
 
 	// EnvVar is the environment variable name
 	EnvVar string
 
-	// DefaultValue is the default value as a string
-	DefaultValue string
-
-	// Required indicates if this field is required
-	Required bool
-
 	// Secret indicates if this field should be treated as secret
 	Secret bool
-
-	// Type is the reflect.Type of the field
-	Type reflect.Type
 
 	// StructField contains the original reflect.StructField
 	StructField reflect.StructField
 }
 
-// GetFieldInfoMap returns a list of all configurable fields with their metadata
-//
-// DO NOT USE with cyclic types
-func GetFieldInfoMap(configStruct interface{}) (map[string]*FieldInfo, error) {
-	if err := validateInput(configStruct); err != nil {
-		return nil, err
-	}
-
-	return parseStructMetadata(reflect.TypeOf(configStruct).Elem(), "")
+type ConfigMetadata struct {
+	FieldPathMap map[string]*FieldInfo
+	EnvMap       map[string]*FieldInfo
+	KeyMap       map[string]*FieldInfo
 }
 
-// parseStructMetadata recursively parses a struct and extracts field metadata
-func parseStructMetadata(t reflect.Type, prefix string) (map[string]*FieldInfo, error) {
-	metadata := make(map[string]*FieldInfo)
+func (c *Config[T]) initMetadata() error {
+	metadata := &ConfigMetadata{
+		FieldPathMap: make(map[string]*FieldInfo),
+		EnvMap:       make(map[string]*FieldInfo),
+		KeyMap:       make(map[string]*FieldInfo),
+	}
 
+	if err := getStructMetadata(c.Options, metadata, reflect.TypeOf(c.Data).Elem(), "", ""); err != nil {
+		return err
+	}
+	c.Metadata = metadata
+	return nil
+}
+
+func getConfigName(opts *Options, field reflect.StructField) string {
+	for _, v := range opts.ConfigTags {
+		configName := field.Tag.Get(v)
+		if configName != "" {
+			return configName
+		}
+	}
+	return strings.ToLower(field.Name)
+}
+
+func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, path_prefix string, key_prefix string) error {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 
@@ -54,69 +69,70 @@ func parseStructMetadata(t reflect.Type, prefix string) (map[string]*FieldInfo, 
 			continue
 		}
 
-		fieldPath := field.Name
-		if prefix != "" {
-			fieldPath = prefix + "." + field.Name
+		// Get config name
+		configName := getConfigName(opts, field)
+
+		// Create fieldpath and config key
+		fieldPath := path_prefix + field.Name
+		configKey := key_prefix + configName
+
+		// Get environment variable name if exists and env loading is enabled
+		envVar := ""
+		if !opts.SkipEnv {
+			envVar = field.Tag.Get("env")
+			// Set environment variable name if not provided and AutoEnv is enabled
+			if opts.AutoEnv && envVar == "" {
+				envVar = strings.ToUpper(strings.ReplaceAll(configKey, ".", "_"))
+			}
 		}
 
-		// Handle embedded structs
-		if field.Anonymous && field.Type.Kind() == reflect.Struct {
-			subMetadata, err := parseStructMetadata(field.Type, prefix)
-			if err != nil {
-				return nil, err
-			}
-			for k, v := range subMetadata {
-				metadata[k] = v
-			}
-			continue
-		}
-
-		// Handle nested structs
-		if field.Type.Kind() == reflect.Struct {
-			subMetadata, err := parseStructMetadata(field.Type, fieldPath)
-			if err != nil {
-				return nil, err
-			}
-			for k, v := range subMetadata {
-				metadata[k] = v
-			}
-			continue
-		}
-
-		// Handle pointer to struct
-		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
-			subMetadata, err := parseStructMetadata(field.Type.Elem(), fieldPath)
-			if err != nil {
-				return nil, err
-			}
-			for k, v := range subMetadata {
-				metadata[k] = v
-			}
-			continue
-		}
-
-		// Parse field tags
-		configKey := field.Tag.Get("config")
-		if configKey == "" {
-			configKey = field.Name
-		}
-
-		envVar := field.Tag.Get("env")
-		defaultValue := field.Tag.Get("default")
-		required := field.Tag.Get("required") == "true"
 		secret := field.Tag.Get("secret") == "true"
 
-		metadata[fieldPath] = &FieldInfo{
-			FieldPath:    fieldPath,
-			ConfigKey:    configKey,
-			EnvVar:       envVar,
-			DefaultValue: defaultValue,
-			Required:     required,
-			Secret:       secret,
-			Type:         field.Type,
-			StructField:  field,
+		// Init FieldInfo
+		fieldInfo := &FieldInfo{
+			FieldPath:   fieldPath,
+			ConfigKey:   configKey,
+			ConfigName:  configName,
+			EnvVar:      envVar,
+			Secret:      secret,
+			StructField: field,
+		}
+
+		// Store FieldInfo by field path
+		metadata.FieldPathMap[fieldPath] = fieldInfo
+
+		// Store FieldInfo by env var and check for dups
+		if envVar != "" {
+			if _, ok := metadata.EnvMap[envVar]; ok {
+				return fmt.Errorf("duplicate env var %q found", envVar)
+			}
+			metadata.EnvMap[envVar] = fieldInfo
+		}
+
+		// Store FieldInfo by config key and check for dups
+		if _, ok := metadata.KeyMap[configKey]; ok {
+			return fmt.Errorf("duplicate config key %q found", configKey)
+		}
+		metadata.KeyMap[configKey] = fieldInfo
+
+		// recursive handle nested, embedded and referenced structs
+		switch field.Type.Kind() {
+		case reflect.Struct:
+			// Handle embedded or nested structs
+			if err := getStructMetadata(opts, metadata, field.Type, fieldPath+".", configKey+"."); err != nil {
+				return err
+			}
+			continue
+		case reflect.Ptr:
+			if field.Type.Elem().Kind() == reflect.Struct {
+				// Handle structs
+				if err := getStructMetadata(opts, metadata, field.Type.Elem(), fieldPath+".", configKey+"."); err != nil {
+					return err
+				}
+			}
+			continue
 		}
 	}
 
-	return metadata, nil
+	return nil
 }
