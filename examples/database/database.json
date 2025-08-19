@@ -1,0 +1,67 @@
+{
+  "primary": {
+    "driver": "postgres",
+    "host": "prod-db.company.com",
+    "port": 5432,
+    "database": "myapp_production",
+    "username": "app_user",
+    "password": "prod-database-password",
+    "ssl_mode": "require",
+    "connect_timeout": "30s",
+    "max_open_conns": 100,
+    "max_idle_conns": 25,
+    "conn_max_lifetime": "1h"
+  },
+  "read_only": {
+    "driver": "postgres", 
+    "host": "read-replica.company.com",
+    "port": 5432,
+    "database": "myapp_production",
+    "username": "readonly_user",
+    "password": "readonly-password",
+    "ssl_mode": "require",
+    "connect_timeout": "30s",
+    "max_open_conns": 50,
+    "max_idle_conns": 15,
+    "conn_max_lifetime": "1h"
+  },
+  "cache": {
+    "enabled": true,
+    "type": "redis",
+    "redis": {
+      "host": "redis.company.com",
+      "port": 6379,
+      "password": "redis-auth-password",
+      "database": 1,
+      "pool_size": 20
+    },
+    "memcache": {
+      "servers": ["memcache1.company.com:11211", "memcache2.company.com:11211"]
+    },
+    "ttl": {
+      "users": "2h",
+      "sessions": "24h", 
+      "cache": "15m",
+      "search": "1h"
+    }
+  },
+  "migration": {
+    "enabled": true,
+    "directory": "/app/migrations",
+    "table": "schema_migrations",
+    "lock_key": "migration_lock_prod",
+    "lock_timeout": "15m"
+  },
+  "backup": {
+    "enabled": true,
+    "schedule": "0 3 * * *",
+    "retention": "2160h",
+    "s3": {
+      "bucket": "myapp-prod-backups",
+      "region": "us-west-2",
+      "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+      "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "endpoint": ""
+    }
+  }
+}

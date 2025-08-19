@@ -75,3 +75,14 @@ func Test_NewConfig_WithoutStruct(t *testing.T) {
 		t.Fatalf("expected error but got none")
 	}
 }
+
+func Test_NewConfig_NilData(t *testing.T) {
+	var defaultConfig *config.Config[NewConfig_TestConfig] = nil
+	_, err := config.NewConfig(nil, defaultConfig)
+	if err == nil {
+		t.Fatal("expected error for uninitialized data")
+	}
+	if !contains(err.Error(), "invalid config struct: config struct cannot be nil") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}

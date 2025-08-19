@@ -11,11 +11,6 @@ import (
 )
 
 func (c *Config[T]) Load() error {
-	// Validate input
-	if err := CheckConfigStruct(c.Data); err != nil {
-		return fmt.Errorf("config validation failed: %w", err)
-	}
-
 	// Set default config paths if not provided
 	if len(c.Options.ConfigPaths) == 0 {
 		c.Options.ConfigPaths = DefaultConfigPaths

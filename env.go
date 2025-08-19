@@ -13,9 +13,6 @@ import (
 func (c *Config[T]) loadFromEnv() error {
 	for envVar, info := range c.Metadata.EnvMap {
 		envKey := envVar
-		if c.Options.EnvPrefix != "" {
-			envKey = c.Options.EnvPrefix + envKey
-		}
 
 		envValue, ok := os.LookupEnv(envKey)
 		if !ok {

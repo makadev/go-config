@@ -1,0 +1,8 @@
+{
+  "app_name": "basic-example",
+  "version": "1.2.0", 
+  "debug": true,
+  "port": 9000,
+  "api_key": "file-loaded-secret",
+  "log_level": "debug"
+}

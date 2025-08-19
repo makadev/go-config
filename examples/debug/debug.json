@@ -1,0 +1,45 @@
+{
+  "app": {
+    "name": "debug-showcase",
+    "version": "2.0.0",
+    "environment": "testing",
+    "debug": false,
+    "log_level": "info",
+    "metadata": {
+      "build": "ci-123",
+      "commit": "def456", 
+      "deploy_by": "ci-system",
+      "region": "us-west-2"
+    }
+  },
+  "database": {
+    "url": "postgres://testuser:testpass@test-db:5432/test_db",
+    "max_conns": 20,
+    "timeout": "45s"
+  },
+  "external": {
+    "payment_api": {
+      "url": "https://api.stripe.com/v1",
+      "key": "pk_test_updated_key",
+      "secret": "sk_test_updated_secret",
+      "timeout": "30s"
+    },
+    "email_api": {
+      "url": "https://api.sendgrid.com/v3",
+      "key": "SG.updated_key_123",
+      "secret": "sg_updated_secret",
+      "timeout": "20s"
+    },
+    "storage_api": {
+      "url": "https://storage.googleapis.com",
+      "key": "GOOG1ABCDEFGHIJKLMNOP",
+      "secret": "gcs_secret_key_example",
+      "timeout": "90s"
+    }
+  },
+  "features": {
+    "new_ui": false,
+    "beta_features": true,
+    "analytics": false
+  }
+}

@@ -19,12 +19,6 @@ type Options struct {
 	// SkipFiles disables configuration file loading
 	SkipFiles bool
 
-	// Dump Secret
-	Secret bool
-
-	// String to use for secret masking
-	SecretWith string
-
 	// Configuration Tags to check
 	ConfigTags []string
 }
@@ -35,8 +29,6 @@ func NewOptions() *Options {
 		EnvPrefix:   "",
 		SkipEnv:     false,
 		SkipFiles:   false,
-		Secret:      true,
-		SecretWith:  "[REDACTED]",
 		ConfigTags:  DefaultConfigTag,
 	}
 }

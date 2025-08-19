@@ -633,3 +633,65 @@ func Test_loadFromEnv_Slice(t *testing.T) {
 		t.Errorf("EmptyStringField: expected %v, got %v", expectedEmptySlice, configData.EmptyStringField)
 	}
 }
+
+func Test_loadFromEnv_NestedStruct(t *testing.T) {
+	type NestedConfig struct {
+		Host string `env:"HOST"`
+		Port int    `env:"PORT"`
+	}
+
+	type TypeTestConfig struct {
+		NestedField  NestedConfig
+		NestedField2 NestedConfig `env:"NESTED_"`
+	}
+
+	envVars := map[string]string{
+		"APP_HOST":        "example.com",
+		"APP_PORT":        "9999",
+		"APP_NESTED_HOST": "localhost",
+		"APP_NESTED_PORT": "8080",
+	}
+
+	for k, v := range envVars {
+		os.Setenv(k, v)
+	}
+
+	defer func() {
+		for k := range envVars {
+			os.Unsetenv(k)
+		}
+	}()
+
+	// Create config
+	opts := config.NewOptions()
+	opts.EnvPrefix = "APP_"
+	configData := &TypeTestConfig{}
+	cfg, err := config.NewConfig(opts, configData)
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+
+	// Load from environment
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err != nil {
+		t.Fatalf("failed to load from env: %v", err)
+	}
+
+	// Verify nested struct fields
+	expectedNested := NestedConfig{
+		Host: "example.com",
+		Port: 9999,
+	}
+	if !reflect.DeepEqual(configData.NestedField, expectedNested) {
+		t.Errorf("NestedField: expected %v, got %v", expectedNested, configData.NestedField)
+	}
+
+	expectedNested2 := NestedConfig{
+		Host: "localhost",
+		Port: 8080,
+	}
+	if !reflect.DeepEqual(configData.NestedField2, expectedNested2) {
+		t.Errorf("NestedField2: expected %v, got %v", expectedNested2, configData.NestedField2)
+	}
+}

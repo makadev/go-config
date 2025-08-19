@@ -6,28 +6,6 @@ import (
 	"strings"
 )
 
-// CheckConfigStruct ensures the provided interface is a pointer to a struct
-func CheckConfigStruct(configStruct interface{}) error {
-	if configStruct == nil {
-		return fmt.Errorf("config struct cannot be nil")
-	}
-
-	rv := reflect.ValueOf(configStruct)
-	if rv.Kind() != reflect.Ptr {
-		return fmt.Errorf("config struct must be a pointer")
-	}
-
-	if rv.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("config struct must be a pointer to a struct")
-	}
-
-	if !rv.Elem().CanSet() {
-		return fmt.Errorf("config struct must be settable")
-	}
-
-	return nil
-}
-
 // ParseBool parses a string to boolean with support for various formats
 func ParseBool(s string) (bool, error) {
 	switch strings.ToLower(s) {
