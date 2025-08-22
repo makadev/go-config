@@ -16,3 +16,8 @@
 ```
 
 * make at least Getter/Setter and Dumping thread-safe f.e. using a RWMutex -> be aware that "read" access like GetFieldValue and GetConfigKey might need to acquire write locks f.e. when fields are initialized on read access
+
+* fix GetFieldValue/GetConfigValue to initialize nil pointers to structs on read access otherwise f.e.:
+GetFieldValue("tls") returns nil when not initialized but GetFieldValue("tls.enabled") returns false and a subsequent GetFieldValue("tls") returns the initialized struct.
+Always initializing is the preferred approach so we don't need to check for nil (at least for structs).
+Alternative: disallow access to structs and only allow access to members, the struct can still be accessed and modified through Config[T].Data field.

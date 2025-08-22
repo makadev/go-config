@@ -471,7 +471,7 @@ func Test_getFieldByPath_NilPointerInitializationWithGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetFieldValue failed: %v", err)
 	}
-	if !config.IsZeroValue(reflect.ValueOf(value)) {
+	if value != "" {
 		t.Errorf("expected <zero value>, got %v", value)
 	}
 
@@ -481,7 +481,7 @@ func Test_getFieldByPath_NilPointerInitializationWithGet(t *testing.T) {
 	if cfg.Data.Nested.Deep == nil {
 		t.Fatal("expected Deep to be initialized")
 	}
-	if !config.IsZeroValue(reflect.ValueOf(cfg.Data.Nested.Deep.Value)) {
+	if cfg.Data.Nested.Deep.Value != "" {
 		t.Errorf("expected <zero value>, got %v", cfg.Data.Nested.Deep.Value)
 	}
 }
@@ -508,8 +508,9 @@ func Test_getFieldByPath_NilPointerInitializationWithSetGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetFieldValue failed: %v", err)
 	}
-	if !config.IsZeroValue(reflect.ValueOf(value)) {
-		t.Errorf("expected <zero value>, got %v", value)
+
+	if reflect.ValueOf(value).IsNil() {
+		t.Errorf("expected initialized struct, got nil")
 	}
 
 	// SetFieldValue should initialize the full accessed path
