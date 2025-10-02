@@ -281,6 +281,7 @@ func TestDumpTable(t *testing.T) {
 	}
 }
 
+
 func TestDumpUnsupportedFormat(t *testing.T) {
 	cfg, err := config.NewConfig(nil, &TestConfigDump{})
 
@@ -301,6 +302,7 @@ func TestDumpUnsupportedFormat(t *testing.T) {
 		t.Errorf("Expected 'unsupported format' error, got: %v", err)
 	}
 }
+
 func TestNewDumpOptionsDefaults(t *testing.T) {
 	opts := config.NewDumpOptions()
 	if opts == nil {

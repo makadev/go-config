@@ -189,7 +189,7 @@ func (c *Config[T]) formatJSON(entries []DumpEntry, options *DumpOptions) (strin
 		data := make(map[string]interface{})
 		for _, entry := range entries {
 			if entry.ConfigKey != "" {
-				data[entry.ConfigKey] = entry.Value
+				setNestedValue(data, entry.ConfigKey, entry.Value)
 			}
 		}
 		bytes, err := json.MarshalIndent(data, "", "  ")
@@ -224,7 +224,7 @@ func (c *Config[T]) formatYAML(entries []DumpEntry, options *DumpOptions) (strin
 		data := make(map[string]interface{})
 		for _, entry := range entries {
 			if entry.ConfigKey != "" {
-				data[entry.ConfigKey] = entry.Value
+				setNestedValue(data, entry.ConfigKey, entry.Value)
 			}
 		}
 		bytes, err := yaml.Marshal(data)
@@ -252,6 +252,21 @@ func (c *Config[T]) formatYAML(entries []DumpEntry, options *DumpOptions) (strin
 		return string(bytes), nil
 	}
 }
+
+func setNestedValue(data map[string]interface{}, key string, value interface{}) {
+	parts := strings.Split(key, ".")
+	for i, part := range parts {
+		if i == len(parts)-1 {
+			data[part] = value
+		} else {
+			if _, ok := data[part]; !ok {
+				data[part] = make(map[string]interface{})
+			}
+			data = data[part].(map[string]interface{})
+		}
+	}
+}
+
 
 func nonprimitiveToString(value interface{}) (interface{}, bool) {
 	kind := reflect.TypeOf(value).Kind()
