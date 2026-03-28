@@ -3,7 +3,7 @@ all: coverage
 
 ## run test
 test:
-	go test -v .
+	go test -race -v .
 
 ## generate coverage + html
 htmlcoverage:
