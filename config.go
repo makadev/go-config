@@ -1,16 +1,33 @@
 // Package config provides a flexible configuration loading system for Go applications.
 // It supports loading configuration from files (YAML/JSON) and environment variables
 // with struct tag annotations for easy mapping.
+//
+// Thread safety:
+// Config method calls (Load, Dump, DumpWithOptions, DumpEnv, Get*/Set*) are
+// synchronized internally. Direct concurrent access to exported members
+// (Config.Data, Config.Metadata, Config.Options) is not synchronized and must
+// be protected by the caller.
 package config
 
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type Config[T any] struct {
+	// mu guards all operations done via Config methods (Load, Dump, Get/Set).
+	// Direct access to exported fields below is not synchronized by this mutex.
+	mu sync.RWMutex
+
+	// Options is exported for convenience, but direct read/write access is not
+	// synchronized. Prefer updating options before concurrent use.
 	Options  *Options
+	// Metadata is exported for advanced introspection. Direct map access is not
+	// synchronized and should be externally guarded when accessed concurrently.
 	Metadata *ConfigMetadata
+	// Data points to the application config struct. Direct field access is not
+	// synchronized and should be externally guarded when accessed concurrently.
 	Data     *T
 }
 

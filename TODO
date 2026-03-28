@@ -1,3 +1,3 @@
 ## Known Issues
 
-* make at least Getter/Setter and Dumping thread-safe f.e. using a RWMutex -> be aware that "read" access like GetFieldValue and GetConfigKey might need to acquire write locks f.e. when fields are initialized on read access
+* method-level thread safety (Load/Get/Set/Dump) is implemented via mutexes, but direct access to exported members like Config.Data / Config.Metadata / Config.Options is not synchronized and must be externally guarded

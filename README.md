@@ -55,6 +55,23 @@ if err := cfg.Load(); err != nil {
 fmt.Println(cfg.Data.Host, cfg.Data.Port)
 ```
 
+### Thread safety
+
+Calls that go through `Config` methods are synchronized internally:
+
+- `Load`
+- `Dump` / `DumpWithOptions` / `DumpEnv`
+- `GetFieldValue` / `SetFieldValue`
+- `GetConfigValue` / `SetConfigValue`
+
+Direct access to exported members is **not** synchronized:
+
+- `cfg.Data`
+- `cfg.Metadata`
+- `cfg.Options`
+
+If you read or write these members directly from multiple goroutines, protect that access with your own synchronization (for example, a `sync.RWMutex`).
+
 ---
 
 ### File loading (YAML & JSON)

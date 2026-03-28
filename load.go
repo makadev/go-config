@@ -11,6 +11,9 @@ import (
 )
 
 func (c *Config[T]) Load() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	// Set default config paths if not provided
 	if len(c.Options.ConfigPaths) == 0 {
 		c.Options.ConfigPaths = DefaultConfigPaths

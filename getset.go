@@ -7,6 +7,9 @@ import (
 )
 
 func (c *Config[T]) GetFieldValue(fieldPath string) (interface{}, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	field, err := c.getFieldByPath(fieldPath, false)
 	if err != nil {
 		return nil, err
@@ -16,6 +19,9 @@ func (c *Config[T]) GetFieldValue(fieldPath string) (interface{}, error) {
 }
 
 func (c *Config[T]) SetFieldValue(fieldPath string, value interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	field, err := c.getFieldByPath(fieldPath, true)
 	if err != nil {
 		return err
@@ -31,6 +37,9 @@ func (c *Config[T]) SetFieldValue(fieldPath string, value interface{}) error {
 }
 
 func (c *Config[T]) GetConfigValue(configKey string) (interface{}, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	field, err := c.getFieldByKey(configKey, false)
 	if err != nil {
 		return nil, err
@@ -39,6 +48,9 @@ func (c *Config[T]) GetConfigValue(configKey string) (interface{}, error) {
 }
 
 func (c *Config[T]) SetConfigValue(configKey string, value interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	field, err := c.getFieldByKey(configKey, true)
 	if err != nil {
 		return err

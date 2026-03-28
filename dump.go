@@ -53,6 +53,9 @@ func (c *Config[T]) Dump() (string, error) {
 }
 
 func (c *Config[T]) DumpWithOptions(options *DumpOptions) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if options == nil {
 		return "", fmt.Errorf("dump options cannot be nil")
 	}
