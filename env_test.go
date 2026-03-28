@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -169,6 +170,174 @@ func ptrValue(ptr interface{}) interface{} {
 		return v.Elem().Interface()
 	}
 	return nil
+}
+
+func Test_setFieldFromString_IntOverflow(t *testing.T) {
+	type Int8Config struct {
+		Field int8 `env:"SMALL_INT"`
+	}
+	os.Setenv("SMALL_INT", "200") // 200 > 127: overflows int8
+	defer os.Unsetenv("SMALL_INT")
+
+	cfg, err := config.NewConfig(nil, &Int8Config{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected overflow error for int8")
+	}
+	if !strings.Contains(err.Error(), "overflows") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setFieldFromString_UintOverflow(t *testing.T) {
+	type Uint8Config struct {
+		Field uint8 `env:"SMALL_UINT"`
+	}
+	os.Setenv("SMALL_UINT", "300") // 300 > 255: overflows uint8
+	defer os.Unsetenv("SMALL_UINT")
+
+	cfg, err := config.NewConfig(nil, &Uint8Config{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected overflow error for uint8")
+	}
+	if !strings.Contains(err.Error(), "overflows") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setFieldFromString_Float32Overflow(t *testing.T) {
+	type F32Config struct {
+		Field float32 `env:"SMALL_FLOAT"`
+	}
+	os.Setenv("SMALL_FLOAT", "1e40") // 1e40 > max float32 (~3.4e38)
+	defer os.Unsetenv("SMALL_FLOAT")
+
+	cfg, err := config.NewConfig(nil, &F32Config{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected overflow error for float32")
+	}
+	if !strings.Contains(err.Error(), "overflows") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setFieldFromString_UnsupportedType(t *testing.T) {
+	type ComplexConfig struct {
+		Field complex64 `env:"COMPLEX_FIELD"`
+	}
+	os.Setenv("COMPLEX_FIELD", "1+2i")
+	defer os.Unsetenv("COMPLEX_FIELD")
+
+	cfg, err := config.NewConfig(nil, &ComplexConfig{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected unsupported type error")
+	}
+	if !strings.Contains(err.Error(), "unsupported field type") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setSliceFromString_ElementError(t *testing.T) {
+	type SliceConfig struct {
+		Ints []int `env:"INT_SLICE"`
+	}
+	os.Setenv("INT_SLICE", "1,abc,3") // "abc" is not a valid int
+	defer os.Unsetenv("INT_SLICE")
+
+	cfg, err := config.NewConfig(nil, &SliceConfig{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected error for non-integer slice element")
+	}
+	if !strings.Contains(err.Error(), "failed to set slice element") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setMapFromString_NonStringKey(t *testing.T) {
+	type MapConfig struct {
+		M map[int]string `env:"INT_MAP"`
+	}
+	os.Setenv("INT_MAP", "1=one,2=two")
+	defer os.Unsetenv("INT_MAP")
+
+	cfg, err := config.NewConfig(nil, &MapConfig{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected error for non-string map key")
+	}
+	if !strings.Contains(err.Error(), "only string keys are supported") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setMapFromString_InvalidPair(t *testing.T) {
+	type MapConfig2 struct {
+		M map[string]string `env:"STR_MAP"`
+	}
+	os.Setenv("STR_MAP", "validkey=value,nokeyequals") // second entry has no "="
+	defer os.Unsetenv("STR_MAP")
+
+	cfg, err := config.NewConfig(nil, &MapConfig2{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected error for invalid key=value pair")
+	}
+	if !strings.Contains(err.Error(), "invalid key=value pair") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_setMapFromString_ValueError(t *testing.T) {
+	type MapIntConfig struct {
+		M map[string]int `env:"MAP_INT"`
+	}
+	os.Setenv("MAP_INT", "count=abc") // "abc" is not a valid int
+	defer os.Unsetenv("MAP_INT")
+
+	cfg, err := config.NewConfig(nil, &MapIntConfig{})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err == nil {
+		t.Fatal("expected error for invalid map value")
+	}
+	if !strings.Contains(err.Error(), "failed to set map value") {
+		t.Errorf("unexpected error: %v", err)
+	}
 }
 
 func Test_loadFromEnv_errors(t *testing.T) {

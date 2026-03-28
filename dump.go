@@ -259,7 +259,12 @@ func setNestedValue(data map[string]interface{}, key string, value interface{}) 
 		if i == len(parts)-1 {
 			data[part] = value
 		} else {
-			if _, ok := data[part]; !ok {
+			existing, ok := data[part]
+			if !ok {
+				data[part] = make(map[string]interface{})
+			} else if _, isMap := existing.(map[string]interface{}); !isMap {
+				// Non-map value already at this key (e.g. a struct-level entry was
+				// processed before its leaf children); replace it with a nested map.
 				data[part] = make(map[string]interface{})
 			}
 			data = data[part].(map[string]interface{})

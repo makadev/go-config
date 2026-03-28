@@ -314,6 +314,27 @@ func Test_GetConfigValue_NonExistentKey(t *testing.T) {
 	}
 }
 
+func Test_GetFieldValue_UnexportedField(t *testing.T) {
+	type ConfigWithUnexported struct {
+		Public  string
+		private string //nolint:unused
+	}
+	cfg, err := config.NewConfig(nil, &ConfigWithUnexported{Public: "hello"})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	// calling with the unexported field name bypasses metadata and directly
+	// hits the CanInterface() false branch inside getFieldByPath.
+	_, err = cfg.GetFieldValue("private")
+	if err == nil {
+		t.Fatal("expected error for unexported field")
+	}
+	if !contains(err.Error(), "cannot be accessed") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func Test_SetConfigValue_Success(t *testing.T) {
 	initData := &GetSet_TestStruct{}
 	cfg, err := config.NewConfig(nil, initData)

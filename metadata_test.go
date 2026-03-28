@@ -361,6 +361,64 @@ func Test_MetadataInit_DuplicateEnvVar(t *testing.T) {
 	}
 }
 
+func Test_MetadataInit_InvalidConfigName(t *testing.T) {
+	// A config tag with an invalid character (space) must be rejected.
+	_, err := config.NewConfig(nil, &struct {
+		Field string `config:"in valid"`
+	}{})
+	if err == nil {
+		t.Fatal("expected error for invalid config name")
+	}
+	if !contains(err.Error(), "must match regex") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_MetadataInit_InvalidEnvVar(t *testing.T) {
+	// An env tag starting with a digit is not a valid identifier.
+	_, err := config.NewConfig(nil, &struct {
+		Field string `config:"field" env:"1INVALID"`
+	}{})
+	if err == nil {
+		t.Fatal("expected error for invalid env var name")
+	}
+	if !contains(err.Error(), "must match regex") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_MetadataInit_NestedStructPropagatesError(t *testing.T) {
+	// Verify that an invalid config name inside a nested struct propagates up
+	// (covers the `return err` inside the reflect.Struct recursion case).
+	_, err := config.NewConfig(nil, &struct {
+		Inner struct {
+			BadField string `config:"bad field"`
+		} `config:"inner"`
+	}{})
+	if err == nil {
+		t.Fatal("expected error propagated from nested struct")
+	}
+	if !contains(err.Error(), "must match regex") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func Test_MetadataInit_NestedPtrStructPropagatesError(t *testing.T) {
+	// Verify that an invalid config name inside a pointer-to-struct propagates up
+	// (covers the `return err` inside the reflect.Ptr recursion case).
+	_, err := config.NewConfig(nil, &struct {
+		Inner *struct {
+			BadField string `config:"bad field"`
+		} `config:"inner"`
+	}{})
+	if err == nil {
+		t.Fatal("expected error propagated from pointer-to-struct")
+	}
+	if !contains(err.Error(), "must match regex") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func Test_MetadataInit_FallbackNaming(t *testing.T) {
 	initData := &struct {
 		Field1 string

@@ -233,6 +233,87 @@ func TestDumpMetadata(t *testing.T) {
 	}
 }
 
+func TestDumpEnvYAML(t *testing.T) {
+	cfg, err := config.NewConfig(nil, &TestConfigDump{
+		Host:     "localhost",
+		Port:     8080,
+		Password: "secret123",
+		Debug:    true,
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	result, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:      "yaml",
+		Content:     "env",
+		MaskSecrets: true,
+		MaskWith:    "***",
+	})
+	if err != nil {
+		t.Fatalf("Dump yaml env failed: %v", err)
+	}
+
+	if !strings.Contains(result, "HOST: localhost") {
+		t.Fatalf("expected HOST in YAML env output, got %s", result)
+	}
+	if !strings.Contains(result, "PASSWORD: '***'") {
+		t.Fatalf("expected masked PASSWORD in YAML env output, got %s", result)
+	}
+	if !strings.Contains(result, "DEBUG: true") {
+		t.Fatalf("expected DEBUG in YAML env output, got %s", result)
+	}
+}
+
+func TestDumpTableAllIncludesFieldPath(t *testing.T) {
+	cfg, err := config.NewConfig(nil, &TestConfigDump{
+		Host:     "localhost",
+		Port:     8080,
+		Password: "secret123",
+		Debug:    true,
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	result, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:      "table",
+		Content:     "all",
+		MaskSecrets: true,
+		MaskWith:    "***",
+	})
+	if err != nil {
+		t.Fatalf("Dump table all failed: %v", err)
+	}
+
+	if !strings.Contains(result, "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET") {
+		t.Fatalf("expected all table header, got %s", result)
+	}
+	if !strings.Contains(result, "password\tPASSWORD\tPassword\t***\tyes") {
+		t.Fatalf("expected password row with field path, got %s", result)
+	}
+}
+
+func TestDumpInvalidContentReturnsEmptyTable(t *testing.T) {
+	cfg, err := config.NewConfig(nil, &TestConfigDump{
+		Host: "localhost",
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	result, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "table",
+		Content: "invalid",
+	})
+	if err != nil {
+		t.Fatalf("expected invalid content to produce empty output, got %v", err)
+	}
+	if result != "" {
+		t.Fatalf("expected empty output for invalid content, got %q", result)
+	}
+}
+
 func TestDumpTable(t *testing.T) {
 	cfg, err := config.NewConfig(nil, &TestConfigDump{
 		Host:     "localhost",
@@ -321,6 +402,220 @@ func TestNewDumpOptionsDefaults(t *testing.T) {
 		t.Errorf("Expected MaskWith=***, got %s", opts.MaskWith)
 	}
 }
+	func TestDumpWithOptions_NilOptions(t *testing.T) {
+		cfg, err := config.NewConfig(nil, &TestConfigDump{})
+		if err != nil {
+			t.Fatalf("failed to initialize config: %v", err)
+		}
+
+		_, err = cfg.DumpWithOptions(nil)
+		if err == nil {
+			t.Fatal("expected error for nil dump options")
+		}
+		if !strings.Contains(err.Error(), "dump options cannot be nil") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+
+	func TestDumpEnvJSON(t *testing.T) {
+		cfg, err := config.NewConfig(nil, &TestConfigDump{
+			Host:     "localhost",
+			Port:     8080,
+			Password: "secret123",
+			Debug:    true,
+		})
+		if err != nil {
+			t.Fatalf("failed to initialize config: %v", err)
+		}
+
+		result, err := cfg.DumpWithOptions(&config.DumpOptions{
+			Format:      "json",
+			Content:     "env",
+			MaskSecrets: true,
+			MaskWith:    "***",
+		})
+		if err != nil {
+			t.Fatalf("DumpWithOptions failed: %v", err)
+		}
+
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(result), &data); err != nil {
+			t.Fatalf("failed to parse JSON result: %v", err)
+		}
+
+		if data["HOST"] != "localhost" {
+			t.Errorf("Expected HOST=localhost, got %v", data["HOST"])
+		}
+		if data["PASSWORD"] != "***" {
+			t.Errorf("Expected PASSWORD to be masked, got %v", data["PASSWORD"])
+		}
+		if data["DEBUG"] != true {
+			t.Errorf("Expected DEBUG=true, got %v", data["DEBUG"])
+		}
+	}
+
+	func TestDumpMetadataYAMLAndTextCollections(t *testing.T) {
+		type DumpCollectionsConfig struct {
+			Names  []string          `json:"names" env:"NAMES"`
+			Labels map[string]string `json:"labels" env:"LABELS"`
+			Secret string            `json:"secret" env:"SECRET" secret:"true"`
+		}
+
+		cfg, err := config.NewConfig(nil, &DumpCollectionsConfig{
+			Names:  []string{"alice", "bob"},
+			Labels: map[string]string{"role": "admin"},
+			Secret: "hidden",
+		})
+		if err != nil {
+			t.Fatalf("failed to initialize config: %v", err)
+		}
+
+		yamlResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+			Format:      "yaml",
+			Content:     "metadata",
+			MaskSecrets: true,
+			MaskWith:    "***",
+		})
+		if err != nil {
+			t.Fatalf("YAML metadata dump failed: %v", err)
+		}
+		if !strings.Contains(yamlResult, "configkey: names") {
+			t.Fatalf("expected YAML metadata output, got %s", yamlResult)
+		}
+		if !strings.Contains(yamlResult, "ismasked: true") {
+			t.Fatalf("expected masked metadata output, got %s", yamlResult)
+		}
+
+		textResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+			Format:      "text",
+			Content:     "all",
+			MaskSecrets: true,
+			MaskWith:    "***",
+		})
+		if err != nil {
+			t.Fatalf("Text dump failed: %v", err)
+		}
+		if !strings.Contains(textResult, "ConfigKey=names") || !strings.Contains(textResult, "Value=alice,bob") {
+			t.Fatalf("expected slice values in text output, got %s", textResult)
+		}
+		if !strings.Contains(textResult, "ConfigKey=labels") || !strings.Contains(textResult, "Value=role=admin") {
+			t.Fatalf("expected map values in text output, got %s", textResult)
+		}
+		if !strings.Contains(textResult, "ConfigKey=secret") || !strings.Contains(textResult, "(secret)") {
+			t.Fatalf("expected secret metadata in text output, got %s", textResult)
+		}
+	}
+
+	func TestDumpTableEnv(t *testing.T) {
+		cfg, err := config.NewConfig(nil, &TestConfigDump{
+			Host:     "localhost",
+			Port:     8080,
+			Password: "secret123",
+			Debug:    true,
+		})
+		if err != nil {
+			t.Fatalf("failed to initialize config: %v", err)
+		}
+
+		result, err := cfg.DumpWithOptions(&config.DumpOptions{
+			Format:      "table",
+			Content:     "env",
+			MaskSecrets: true,
+			MaskWith:    "***",
+		})
+		if err != nil {
+			t.Fatalf("Dump table failed: %v", err)
+		}
+
+		if !strings.Contains(result, "ENV_VAR\tVALUE\tSECRET") {
+			t.Fatalf("expected env table header, got %s", result)
+		}
+		if !strings.Contains(result, "PASSWORD\t***\tyes") {
+			t.Fatalf("expected masked password in env table, got %s", result)
+		}
+	}
+
+func TestDumpNestedConfig(t *testing.T) {
+	type ServerCfg struct {
+		Host string `json:"host"`
+		Port int    `json:"port"`
+	}
+	type AppCfg struct {
+		Name   string    `json:"name"`
+		Server ServerCfg `json:"server"`
+	}
+
+	cfg, err := config.NewConfig(nil, &AppCfg{
+		Name:   "myapp",
+		Server: ServerCfg{Host: "localhost", Port: 8080},
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	// JSON config format — exercises setNestedValue traversal
+	jsonResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "json",
+		Content: "config",
+	})
+	if err != nil {
+		t.Fatalf("JSON dump failed: %v", err)
+	}
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonResult), &data); err != nil {
+		t.Fatalf("failed to parse JSON result: %v", err)
+	}
+	server, ok := data["server"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected server key to be a nested map, got %T", data["server"])
+	}
+	if server["host"] != "localhost" {
+		t.Errorf("expected server.host=localhost, got %v", server["host"])
+	}
+	if server["port"].(float64) != 8080 {
+		t.Errorf("expected server.port=8080, got %v", server["port"])
+	}
+
+	// YAML config format — exercises formatYAML nested keys
+	yamlResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "yaml",
+		Content: "config",
+	})
+	if err != nil {
+		t.Fatalf("YAML dump failed: %v", err)
+	}
+	if !strings.Contains(yamlResult, "host: localhost") {
+		t.Errorf("expected host in YAML output, got: %s", yamlResult)
+	}
+	if !strings.Contains(yamlResult, "port: 8080") {
+		t.Errorf("expected port in YAML output, got: %s", yamlResult)
+	}
+
+	// text config format — exercises nonprimitiveToString(struct) → skip
+	textResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "text",
+		Content: "config",
+	})
+	if err != nil {
+		t.Fatalf("text dump failed: %v", err)
+	}
+	if !strings.Contains(textResult, "name=myapp") {
+		t.Errorf("expected name in text output, got: %s", textResult)
+	}
+
+	// table config format — exercises table struct-value skip
+	tableResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "table",
+		Content: "config",
+	})
+	if err != nil {
+		t.Fatalf("table dump failed: %v", err)
+	}
+	if !strings.Contains(tableResult, "CONFIG_KEY") {
+		t.Errorf("expected table header in output, got: %s", tableResult)
+	}
+}
+
 func TestDump_DefaultYamlConfigMasked(t *testing.T) {
 	cfg, err := config.NewConfig(nil, &TestConfigDump{
 		Host:     "localhost",
