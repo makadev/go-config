@@ -94,5 +94,11 @@ func (c *Config[T]) getFieldByPath(fieldPath string, checkWritable bool) (reflec
 		current = fieldVal
 	}
 
+	if current.Kind() == reflect.Ptr && current.IsNil() {
+		// If the final resolved field is a nil pointer, initialize it so callers
+		// receive the expected zero-value instance instead of a nil pointer.
+		current.Set(reflect.New(current.Type().Elem()))
+	}
+
 	return current, nil
 }
