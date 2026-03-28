@@ -1,3 +1,5 @@
+## Known Issues
+
 * fix Dump bug which reproduced a configkey for each field in the struct instead of a single key for the entire struct and nested keys for the fields:
 
 ```json
