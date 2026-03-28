@@ -52,7 +52,8 @@ type FeatureFlags struct {
 }
 
 func main() {
-	fmt.Println("=== Configuration Debug & Dump Formats Example ===\n")
+	fmt.Println("=== Configuration Debug & Dump Formats Example ===")
+	fmt.Println()
 
 	// Create a complex configuration for demonstration
 	cfg := createDemoConfig()
@@ -65,7 +66,8 @@ func main() {
 		log.Fatalf("Failed to create config: %v", err)
 	}
 
-	fmt.Println("Configuration loaded successfully!\n")
+	fmt.Println("Configuration loaded successfully!")
+	fmt.Println()
 
 	// Demonstrate all dump formats and options
 	demonstrateAllFormats(goCfg)
@@ -138,7 +140,8 @@ func createDemoConfig() *DebugConfig {
 }
 
 func demonstrateAllFormats(cfg *config.Config[DebugConfig]) {
-	fmt.Println("=== ALL DUMP FORMATS ===\n")
+	fmt.Println("=== ALL DUMP FORMATS ===")
+	fmt.Println()
 
 	formats := []string{"json", "text", "table"}
 
@@ -160,7 +163,8 @@ func demonstrateAllFormats(cfg *config.Config[DebugConfig]) {
 }
 
 func demonstrateContentFilters(cfg *config.Config[DebugConfig]) {
-	fmt.Println("=== CONTENT FILTERS ===\n")
+	fmt.Println("=== CONTENT FILTERS ===")
+	fmt.Println()
 
 	contents := []struct {
 		name        string
@@ -199,7 +203,8 @@ func demonstrateContentFilters(cfg *config.Config[DebugConfig]) {
 }
 
 func demonstrateSecretHandling(cfg *config.Config[DebugConfig]) {
-	fmt.Println("=== SECRET HANDLING ===\n")
+	fmt.Println("=== SECRET HANDLING ===")
+	fmt.Println()
 
 	scenarios := []struct {
 		name        string
@@ -239,7 +244,9 @@ func demonstrateSecretHandling(cfg *config.Config[DebugConfig]) {
 }
 
 func runInteractiveMode(cfg *config.Config[DebugConfig]) {
-	fmt.Println("\n=== INTERACTIVE MODE ===\n")
+	fmt.Println()
+	fmt.Println("=== INTERACTIVE MODE ===")
+	fmt.Println()
 	fmt.Println("Available commands:")
 	fmt.Println("  formats  - Show all output formats")
 	fmt.Println("  content  - Show all content types")

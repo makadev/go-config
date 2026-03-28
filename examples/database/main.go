@@ -76,7 +76,8 @@ type S3Config struct {
 }
 
 func main() {
-	fmt.Println("=== Database Configuration Example ===\n")
+	fmt.Println("=== Database Configuration Example ===")
+	fmt.Println()
 
 	// Create default configuration
 	defaultConfig := &DatabaseConfig{
@@ -154,13 +155,15 @@ func main() {
 		log.Fatalf("Failed to create config: %v", err)
 	}
 
-	fmt.Println("✓ Loaded configuration from environment variables\n")
+	fmt.Println("✓ Loaded configuration from environment variables")
+	fmt.Println()
 
 	// Validate configuration
 	if err := validateDatabaseConfig(cfg.Data); err != nil {
 		log.Fatalf("Configuration validation failed: %v", err)
 	}
-	fmt.Println("✓ Configuration validation passed\n")
+	fmt.Println("✓ Configuration validation passed")
+	fmt.Println()
 
 	// Demo various configuration dumps
 	demoDatabaseConfigDumps(cfg)
@@ -226,7 +229,8 @@ func validateConnection(name string, conn *DatabaseConnection) error {
 }
 
 func demoDatabaseConfigDumps(cfg *config.Config[DatabaseConfig]) {
-	fmt.Println("=== Database Configuration Dumps ===\n")
+	fmt.Println("=== Database Configuration Dumps ===")
+	fmt.Println()
 
 	// 1. Security audit - show which fields contain secrets
 	fmt.Println("1. Security Audit (Metadata with Secret Detection):")
@@ -294,7 +298,8 @@ func demoDatabaseConfigDumps(cfg *config.Config[DatabaseConfig]) {
 }
 
 func demoConnectionStrings(cfg *DatabaseConfig) {
-	fmt.Println("=== Database Connection Information ===\n")
+	fmt.Println("=== Database Connection Information ===")
+	fmt.Println()
 
 	// Generate safe connection info (without passwords)
 	fmt.Println("Primary Database:")

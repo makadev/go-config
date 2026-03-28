@@ -58,7 +58,8 @@ type SecurityConfig struct {
 }
 
 func main() {
-	fmt.Println("=== Web Server Configuration Example ===\n")
+	fmt.Println("=== Web Server Configuration Example ===")
+	fmt.Println()
 
 	// Create default configuration
 	defaultConfig := &ServerConfig{
@@ -101,13 +102,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create config: %v", err)
 	}
-	fmt.Println("✓ Loaded configuration from environment variables\n")
+	fmt.Println("✓ Loaded configuration from environment variables")
+	fmt.Println()
 
 	// Validate configuration
 	if err := validateConfig(cfg.Data); err != nil {
 		log.Fatalf("Configuration validation failed: %v", err)
 	}
-	fmt.Println("✓ Configuration validation passed\n")
+	fmt.Println("✓ Configuration validation passed")
+	fmt.Println()
 
 	// Demo: Configuration dumps for different purposes
 	demoConfigurationDumps(cfg)
@@ -139,7 +142,8 @@ func validateConfig(cfg *ServerConfig) error {
 }
 
 func demoConfigurationDumps(cfg *config.Config[ServerConfig]) {
-	fmt.Println("=== Configuration Dumps ===\n")
+	fmt.Println("=== Configuration Dumps ===")
+	fmt.Println()
 
 	// 1. Operations dump - table format for overview
 	fmt.Println("1. Operations Overview (Table Format):")
