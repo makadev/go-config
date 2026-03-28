@@ -2,17 +2,21 @@
 
 A lightweight, generic Go library for loading and managing application configuration. It provides a thin layer of structure on top of standard YAML/JSON file loading, with first-class support for environment variable overrides and user-friendly configuration dumping.
 
-## GOALS
-- Provide a robust configuration loading system for Go applications.
-- Support loading configuration from various sources: files (YAML/JSON) and environment variables.
-- Allow easy mapping of configuration fields to struct fields using tags.
-- Facilitate the dumping of configuration data in a user-friendly format.
+## Scope
 
-## NON-GOALS
-- Provide a complete solution for all possible configuration scenarios. Instead this should be a robust starting point that can be extended as needed and just adds a little bit of structure and organization on top of YAML/JSON/.. file loading.
-- Replace existing configuration management tools or libraries. This library is not intended to be a drop-in replacement for existing tools, but rather a complementary solution specifically with a focus on simplicity and ease of use.
-- Verification of configuration values. There are other frameworks that specialize in struct validation f.e. https://github.com/go-playground/validator
-- Performance and Memory optimization. A configuration is typically loaded once at startup and then accessed in-memory with a small set of keys/values, so the performance impact is minimal.
+This library is a simple, composable config layer for Go services, not an all-in-one configuration platform.
+
+## When to use go-config
+
+Use this library when your service needs:
+- A typed config struct loaded from local YAML/JSON files.
+- Environment variable overrides for deployment-specific values.
+- Safe config dumps with masked secrets for debugging and support.
+
+Consider a larger config framework when you need:
+- Remote config sources (Vault, Consul, AWS Parameter Store, etc.).
+- Live reload and distributed config updates.
+- Built-in schema validation, policy enforcement, or advanced config lifecycles.
 
 ## Installation
 
@@ -22,7 +26,7 @@ go get github.com/makadev/go-config
 
 ## Usage
 
-The following examples cover every feature listed above. All examples use this import:
+The following examples cover the main features of this library. All examples use this import:
 
 ```go
 import config "github.com/makadev/go-config"
@@ -470,6 +474,8 @@ Boolean fields accept a wider range of values than Go's `strconv.ParseBool` when
 |-----------------|--------|
 | `true`, `t`, `yes`, `y`, `1`, `on` | `true` |
 | `false`, `f`, `no`, `n`, `0`, `off` | `false` |
+
+An empty string is also treated as `false`.
 
 All values are case-insensitive.
 
