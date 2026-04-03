@@ -39,6 +39,11 @@ func main() {
 		log.Fatalf("Failed to create config: %v", err)
 	}
 
+	// Load configuration from file and environment variables
+	if err := cfg.Load(); err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	// Demo: Show current configuration values
 	fmt.Println("Current Configuration:")
 	fmt.Printf("  App Name: %s\n", cfg.Data.AppName)
@@ -52,8 +57,8 @@ func main() {
 	// Demo: Dump configuration in different formats
 	fmt.Println("=== Configuration Dumps ===")
 
-	// 1. Basic JSON dump (secrets masked)
-	fmt.Println("1. JSON Config Dump (secrets masked):")
+	// 1. Default dump (table format, secrets masked)
+	fmt.Println("1. Default Dump (table, secrets masked):")
 	jsonDump, err := cfg.Dump()
 	if err != nil {
 		log.Fatalf("Failed to dump config: %v", err)

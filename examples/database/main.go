@@ -155,14 +155,16 @@ func main() {
 		log.Fatalf("Failed to create config: %v", err)
 	}
 
-	fmt.Println("✓ Loaded configuration from environment variables")
-	fmt.Println()
+	// Load configuration from file and environment variables
+	if err := cfg.Load(); err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 
 	// Validate configuration
 	if err := validateDatabaseConfig(cfg.Data); err != nil {
 		log.Fatalf("Configuration validation failed: %v", err)
 	}
-	fmt.Println("✓ Configuration validation passed")
+	fmt.Println("Configuration validation passed")
 	fmt.Println()
 
 	// Demo various configuration dumps
