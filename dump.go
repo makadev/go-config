@@ -1,11 +1,13 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -353,12 +355,13 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 		return "", nil
 	}
 
-	var lines []string
+	var buf bytes.Buffer
+	w := tabwriter.NewWriter(&buf, 0, 0, 3, ' ', 0)
 
 	switch options.Content {
 	case "config":
-		lines = append(lines, "CONFIG_KEY\tVALUE\tSECRET")
-		lines = append(lines, "----------\t-----\t------")
+		fmt.Fprintln(w, "CONFIG_KEY\tVALUE\tSECRET")
+		fmt.Fprintln(w, "----------\t-----\t------")
 		for _, entry := range entries {
 			val, ok := nonprimitiveToString(entry.Value)
 			if !ok {
@@ -369,12 +372,12 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 				if entry.IsSecret {
 					secret = "yes"
 				}
-				lines = append(lines, fmt.Sprintf("%s\t%v\t%s", entry.ConfigKey, val, secret))
+				fmt.Fprintf(w, "%s\t%v\t%s\n", entry.ConfigKey, val, secret)
 			}
 		}
 	case "env":
-		lines = append(lines, "ENV_VAR\tVALUE\tSECRET")
-		lines = append(lines, "-------\t-----\t------")
+		fmt.Fprintln(w, "ENV_VAR\tVALUE\tSECRET")
+		fmt.Fprintln(w, "-------\t-----\t------")
 		for _, entry := range entries {
 			val, ok := nonprimitiveToString(entry.Value)
 			if !ok {
@@ -385,18 +388,17 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 				if entry.IsSecret {
 					secret = "yes"
 				}
-				lines = append(lines, fmt.Sprintf("%s\t%v\t%s", entry.EnvVar, val, secret))
+				fmt.Fprintf(w, "%s\t%v\t%s\n", entry.EnvVar, val, secret)
 			}
 		}
 	default:
-		header := "CONFIG_KEY\tENV_VAR\tVALUE\tSECRET"
-		separator := "----------\t-------\t-----\t------"
 		if options.Content == "all" {
-			header = "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET"
-			separator = "----------\t-------\t----------\t-----\t------"
+			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-------\t----------\t-----\t------")
+		} else {
+			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-------\t-----\t------")
 		}
-		lines = append(lines, header)
-		lines = append(lines, separator)
 
 		for _, entry := range entries {
 			val, ok := nonprimitiveToString(entry.Value)
@@ -409,14 +411,15 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 			}
 
 			if options.Content == "all" {
-				lines = append(lines, fmt.Sprintf("%s\t%s\t%s\t%v\t%s",
-					entry.ConfigKey, entry.EnvVar, entry.FieldPath, val, secret))
+				fmt.Fprintf(w, "%s\t%s\t%s\t%v\t%s\n",
+					entry.ConfigKey, entry.EnvVar, entry.FieldPath, val, secret)
 			} else {
-				lines = append(lines, fmt.Sprintf("%s\t%s\t%v\t%s",
-					entry.ConfigKey, entry.EnvVar, val, secret))
+				fmt.Fprintf(w, "%s\t%s\t%v\t%s\n",
+					entry.ConfigKey, entry.EnvVar, val, secret)
 			}
 		}
 	}
 
-	return strings.Join(lines, "\n"), nil
+	w.Flush()
+	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
