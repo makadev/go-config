@@ -36,7 +36,7 @@ type DumpEntry struct {
 
 func NewDumpOptions() *DumpOptions {
 	return &DumpOptions{
-		Format:      "json",
+		Format:      "table",
 		Content:     "config",
 		MaskSecrets: true,
 		MaskWith:    "***",
@@ -45,7 +45,7 @@ func NewDumpOptions() *DumpOptions {
 
 func (c *Config[T]) Dump() (string, error) {
 	return c.DumpWithOptions(&DumpOptions{
-		Format:      "yaml",
+		Format:      "table",
 		Content:     "config",
 		MaskSecrets: true,
 		MaskWith:    "***",

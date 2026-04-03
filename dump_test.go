@@ -389,8 +389,8 @@ func TestNewDumpOptionsDefaults(t *testing.T) {
 	if opts == nil {
 		t.Fatal("NewDumpOptions returned nil")
 	}
-	if opts.Format != "json" {
-		t.Errorf("Expected Format=json, got %s", opts.Format)
+	if opts.Format != "table" {
+		t.Errorf("Expected Format=table, got %s", opts.Format)
 	}
 	if opts.Content != "config" {
 		t.Errorf("Expected Content=config, got %s", opts.Content)
@@ -616,7 +616,7 @@ func TestDumpNestedConfig(t *testing.T) {
 	}
 }
 
-func TestDump_DefaultYamlConfigMasked(t *testing.T) {
+func TestDump_DefaultTableConfigMasked(t *testing.T) {
 	cfg, err := config.NewConfig(nil, &TestConfigDump{
 		Host:     "localhost",
 		Port:     8080,
@@ -632,17 +632,17 @@ func TestDump_DefaultYamlConfigMasked(t *testing.T) {
 		t.Fatalf("Dump failed: %v", err)
 	}
 
-	// Check YAML output contains expected values
-	if !strings.Contains(result, "host: localhost") {
-		t.Errorf("Expected host=localhost in YAML, got: %s", result)
+	// Check table output contains expected header and values
+	if !strings.Contains(result, "CONFIG_KEY") {
+		t.Errorf("Expected CONFIG_KEY header in table output, got: %s", result)
 	}
-	if !strings.Contains(result, "port: 8080") {
-		t.Errorf("Expected port=8080 in YAML, got: %s", result)
+	if !strings.Contains(result, "localhost") {
+		t.Errorf("Expected localhost in table output, got: %s", result)
 	}
-	if !strings.Contains(result, "password: '***'") {
-		t.Errorf("Expected password to be masked as '***', got: %s", result)
+	if !strings.Contains(result, "8080") {
+		t.Errorf("Expected 8080 in table output, got: %s", result)
 	}
-	if !strings.Contains(result, "debug: false") {
-		t.Errorf("Expected debug=false in YAML, got: %s", result)
+	if !strings.Contains(result, "***") {
+		t.Errorf("Expected password to be masked as *** in table output, got: %s", result)
 	}
 }
