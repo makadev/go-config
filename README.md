@@ -287,8 +287,17 @@ output, _ := cfg.DumpWithOptions(&config.DumpOptions{
 `Dump` / `DumpWithOptions` support four output formats: `json`, `yaml`, `text` (key=value), and `table`.
 
 ```go
-// Table (default via Dump)
-tableOut, _ := cfg.Dump()
+type AppConfig struct {
+    Host     string `yaml:"host"     env:"APP_HOST"`
+    Port     int    `yaml:"port"     env:"APP_PORT"`
+    Password string `yaml:"password" env:"APP_PASSWORD" secret:"true"`
+}
+
+cfg, _ := config.NewConfig(config.NewOptions(), &AppConfig{Host: "localhost", Port: 8080, Password: "s3cr3t"})
+cfg.Load()
+
+// YAML (default via Dump)
+yamlOut, _ := cfg.Dump()
 
 // JSON
 jsonOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "json", Content: "config", MaskSecrets: true})
@@ -330,6 +339,8 @@ The `Content` field of `DumpOptions` controls what information is included in th
 | `"all"`    | Everything above plus the Go struct field path |
 
 ```go
+// Using the same AppConfig struct and cfg from the "Multiple dump formats" section above.
+
 // Show env-variable-to-value mapping
 cfg.DumpWithOptions(&config.DumpOptions{Format: "table", Content: "env", MaskSecrets: true})
 // ENV_VAR      VALUE       SECRET
