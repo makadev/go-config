@@ -185,7 +185,7 @@ opts.EnvPrefix  = "MYAPP_"
 
 ### Struct-as-env-prefix pattern
 
-When `AutoEnv` is `false` (the default), placing `env:"PREFIX"` on a struct field makes that value the prefix for all nested fields' env var names.
+When `AutoEnv` is `false` (the default), placing `env:"PREFIX_"` on a struct field makes that value the prefix for all nested fields' env var names.
 
 ```go
 type ServerConfig struct {
@@ -193,7 +193,7 @@ type ServerConfig struct {
     Port int    `env:"PORT"` // resolved as SERVER_PORT
 }
 type AppConfig struct {
-    Server ServerConfig `env:"SERVER"`
+    Server ServerConfig `env:"SERVER_"`
 }
 
 // export SERVER_HOST=0.0.0.0
