@@ -349,11 +349,11 @@ cfg.DumpWithOptions(&config.DumpOptions{Format: "table", Content: "env", MaskSec
 
 // Full metadata for troubleshooting
 cfg.DumpWithOptions(&config.DumpOptions{Format: "table", Content: "all", MaskSecrets: true})
-// CONFIG_KEY   ENV_VAR      FIELD_PATH      VALUE       SECRET
-// ----------   -------      ----------      -----       ------
-// host         APP_HOST     Host            localhost
-// port         APP_PORT     Port            8080
-// password     APP_PASSWORD Password        ***         yes
+// CONFIG_KEY   CONFIG_NAME   ENV_VAR      FIELD_PATH      VALUE       SECRET
+// ----------   -----------   -------      ----------      -----       ------
+// host         host          APP_HOST     Host            localhost
+// port         port          APP_PORT     Port            8080
+// password     password      APP_PASSWORD Password        ***         yes
 ```
 
 ---

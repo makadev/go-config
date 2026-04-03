@@ -286,7 +286,7 @@ func TestDumpTableAllIncludesFieldPath(t *testing.T) {
 		t.Fatalf("Dump table all failed: %v", err)
 	}
 
-	if !strings.Contains(result, "CONFIG_KEY") || !strings.Contains(result, "ENV_VAR") ||
+	if !strings.Contains(result, "CONFIG_KEY") || !strings.Contains(result, "CONFIG_NAME") || !strings.Contains(result, "ENV_VAR") ||
 		!strings.Contains(result, "FIELD_PATH") || !strings.Contains(result, "VALUE") || !strings.Contains(result, "SECRET") {
 		t.Fatalf("expected all table header, got %s", result)
 	}
@@ -313,6 +313,37 @@ func TestDumpInvalidContentReturnsEmptyTable(t *testing.T) {
 	}
 	if result != "" {
 		t.Fatalf("expected empty output for invalid content, got %q", result)
+	}
+}
+
+func TestDumpTableMetadataIncludesConfigName(t *testing.T) {
+	cfg, err := config.NewConfig(nil, &TestConfigDump{
+		Host:     "localhost",
+		Port:     8080,
+		Password: "secret123",
+		Debug:    true,
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	result, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:      "table",
+		Content:     "metadata",
+		MaskSecrets: true,
+		MaskWith:    "***",
+	})
+	if err != nil {
+		t.Fatalf("Dump table metadata failed: %v", err)
+	}
+
+	if !strings.Contains(result, "CONFIG_KEY") || !strings.Contains(result, "CONFIG_NAME") ||
+		!strings.Contains(result, "ENV_VAR") || !strings.Contains(result, "VALUE") || !strings.Contains(result, "SECRET") {
+		t.Fatalf("expected metadata table header with CONFIG_NAME, got %s", result)
+	}
+	if !strings.Contains(result, "password") || !strings.Contains(result, "PASSWORD") ||
+		!strings.Contains(result, "***") || !strings.Contains(result, "yes") {
+		t.Fatalf("expected password row in metadata table, got %s", result)
 	}
 }
 
