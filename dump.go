@@ -393,11 +393,11 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 		}
 	default:
 		if options.Content == "all" {
-			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET")
-			fmt.Fprintln(w, "----------\t-------\t----------\t-----\t------")
+			fmt.Fprintln(w, "CONFIG_KEY\tCONFIG_NAME\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-----------\t-------\t----------\t-----\t------")
 		} else {
-			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tVALUE\tSECRET")
-			fmt.Fprintln(w, "----------\t-------\t-----\t------")
+			fmt.Fprintln(w, "CONFIG_KEY\tCONFIG_NAME\tENV_VAR\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-----------\t-------\t-----\t------")
 		}
 
 		for _, entry := range entries {
@@ -411,11 +411,11 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 			}
 
 			if options.Content == "all" {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%v\t%s\n",
-					entry.ConfigKey, entry.EnvVar, entry.FieldPath, val, secret)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%v\t%s\n",
+					entry.ConfigKey, entry.ConfigName, entry.EnvVar, entry.FieldPath, val, secret)
 			} else {
-				fmt.Fprintf(w, "%s\t%s\t%v\t%s\n",
-					entry.ConfigKey, entry.EnvVar, val, secret)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%v\t%s\n",
+					entry.ConfigKey, entry.ConfigName, entry.EnvVar, val, secret)
 			}
 		}
 	}
