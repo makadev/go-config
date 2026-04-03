@@ -347,6 +347,87 @@ func TestDumpTableMetadataIncludesConfigName(t *testing.T) {
 	}
 }
 
+func TestDumpTableMetadataNestedConfigNameDiffers(t *testing.T) {
+	type ServerCfg struct {
+		Host string `json:"host" env:"SERVER_HOST"`
+		Port int    `json:"port" env:"SERVER_PORT"`
+	}
+	type AppCfg struct {
+		Name   string    `json:"name" env:"APP_NAME"`
+		Server ServerCfg `json:"server"`
+	}
+
+	cfg, err := config.NewConfig(nil, &AppCfg{
+		Name:   "myapp",
+		Server: ServerCfg{Host: "localhost", Port: 8080},
+	})
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	// metadata table: config_key="server.host", config_name="host" — they must differ
+	result, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "table",
+		Content: "metadata",
+	})
+	if err != nil {
+		t.Fatalf("Dump table metadata failed: %v", err)
+	}
+
+	if !strings.Contains(result, "CONFIG_NAME") {
+		t.Fatalf("expected CONFIG_NAME header in metadata table, got %s", result)
+	}
+	// "server.host" is the config_key, "host" is the config_name
+	if !strings.Contains(result, "server.host") {
+		t.Fatalf("expected config_key 'server.host' in metadata table, got %s", result)
+	}
+	if !strings.Contains(result, "server.port") {
+		t.Fatalf("expected config_key 'server.port' in metadata table, got %s", result)
+	}
+
+	// Verify config_name != config_key by checking rows contain both the full key and the leaf name
+	lines := strings.Split(result, "\n")
+	foundDiffering := false
+	for _, line := range lines {
+		// A row with "server.host" should also have "host" as config_name
+		if strings.Contains(line, "server.host") && strings.Contains(line, "SERVER_HOST") {
+			foundDiffering = true
+			// The line should contain "host" as config_name (separate from "server.host")
+			// Split by whitespace and check for the leaf name
+			fields := strings.Fields(line)
+			if len(fields) < 3 {
+				t.Fatalf("expected at least 3 fields in row, got %v", fields)
+			}
+			// fields[0] = config_key ("server.host"), fields[1] = config_name ("host")
+			if fields[0] != "server.host" {
+				t.Errorf("expected config_key 'server.host', got %s", fields[0])
+			}
+			if fields[1] != "host" {
+				t.Errorf("expected config_name 'host' (different from config_key), got %s", fields[1])
+			}
+			break
+		}
+	}
+	if !foundDiffering {
+		t.Fatalf("expected a row where config_key and config_name differ, got %s", result)
+	}
+
+	// Also verify "all" table includes CONFIG_NAME for nested fields
+	allResult, err := cfg.DumpWithOptions(&config.DumpOptions{
+		Format:  "table",
+		Content: "all",
+	})
+	if err != nil {
+		t.Fatalf("Dump table all failed: %v", err)
+	}
+	if !strings.Contains(allResult, "CONFIG_NAME") {
+		t.Fatalf("expected CONFIG_NAME header in all table, got %s", allResult)
+	}
+	if !strings.Contains(allResult, "server.port") {
+		t.Fatalf("expected config_key 'server.port' in all table, got %s", allResult)
+	}
+}
+
 func TestDumpTable(t *testing.T) {
 	cfg, err := config.NewConfig(nil, &TestConfigDump{
 		Host:     "localhost",
