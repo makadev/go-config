@@ -403,7 +403,7 @@ func Test_MetadataInit_DuplicateConfigKey(t *testing.T) {
 		t.Fatalf("expected error due to duplicate config key, got nil")
 	}
 	expectedErr := "duplicate config key"
-	if err != nil && !contains(err.Error(), expectedErr) {
+	if !contains(err.Error(), expectedErr) {
 		t.Fatalf("expected error to contain %q, got %v", expectedErr, err)
 	}
 }
@@ -420,7 +420,7 @@ func Test_MetadataInit_DuplicateEnvVar(t *testing.T) {
 		t.Fatalf("expected error due to duplicate env var, got nil")
 	}
 	expectedErr := "duplicate env var"
-	if err != nil && !contains(err.Error(), expectedErr) {
+	if !contains(err.Error(), expectedErr) {
 		t.Fatalf("expected error to contain %q, got %v", expectedErr, err)
 	}
 }
