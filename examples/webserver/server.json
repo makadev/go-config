@@ -1,13 +1,10 @@
 {
   "server": {
     "host": "0.0.0.0",
-    "port": 8080,
-    "read_timeout": "30s",
-    "write_timeout": "30s", 
-    "idle_timeout": "120s"
+    "port": 8080
   },
   "tls": {
-    "enabled": true,
+    "enabled": false,
     "cert_file": "/etc/ssl/certs/server.crt",
     "key_file": "/etc/ssl/private/server.key",
     "port": 8443
@@ -21,11 +18,10 @@
   "logging": {
     "level": "info",
     "format": "json",
-    "output": "/var/log/server.log"
+    "output": "stdout"
   },
   "security": {
-    "jwt_secret": "production-jwt-secret-key",
-    "session_timeout": "24h",
+    "jwt_secret": "example-jwt-secret-key",
     "rate_limit_rps": 200,
     "max_request_size": 52428800
   }

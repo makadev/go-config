@@ -66,6 +66,11 @@ func main() {
 		log.Fatalf("Failed to create config: %v", err)
 	}
 
+	// Load configuration from file and environment variables
+	if err := goCfg.Load(); err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	fmt.Println("Configuration loaded successfully!")
 	fmt.Println()
 
