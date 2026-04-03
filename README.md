@@ -74,7 +74,31 @@ Direct access to exported members is **not** synchronized:
 - `cfg.Metadata`
 - `cfg.Options`
 
-If you read or write these members directly from multiple goroutines, protect that access with your own synchronization (for example, a `sync.RWMutex`).
+To protect direct field access from multiple goroutines, use the locking helpers built into `Config`:
+
+```go
+// WithLock / WithRLock — preferred; lock is always released via defer
+cfg.WithLock(func() {
+    cfg.Data.Counter++
+})
+
+var snapshot MyConfig
+cfg.WithRLock(func() {
+    snapshot = *cfg.Data
+})
+
+// Raw Lock / Unlock when defer-based scoping does not fit
+cfg.Lock()
+cfg.Data.Counter++
+cfg.Unlock()
+
+// Raw RLock / RUnlock
+cfg.RLock()
+value := cfg.Data.Counter
+cfg.RUnlock()
+```
+
+> **Deadlock warning:** Do **not** call any `Config` methods (`Load`, `Dump`, `Get*`, `Set*`, …) inside a `WithLock`/`WithRLock` callback or between `Lock`/`Unlock` (or `RLock`/`RUnlock`) calls. Those methods acquire the same mutex internally, and `sync.RWMutex` is not reentrant — doing so will deadlock.
 
 ---
 
