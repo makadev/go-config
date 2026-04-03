@@ -59,7 +59,7 @@ func getConfigName(opts *Options, field reflect.StructField) string {
 
 var (
 	EnvVarRE     = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]+$`)
-	configKeySegmentRE = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	ConfigKeySegmentRE = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 )
 
 func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, path_prefix string, key_prefix string, env_prefix string) error {
@@ -74,8 +74,8 @@ func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, 
 		// Get config name
 		configName := getConfigName(opts, field)
 
-		if !configKeySegmentRE.MatchString(configName) {
-			return fmt.Errorf("config name %q must match regex %q", configName, configKeySegmentRE.String())
+		if !ConfigKeySegmentRE.MatchString(configName) {
+			return fmt.Errorf("config name %q must match regex %q", configName, ConfigKeySegmentRE.String())
 		}
 
 		// Create fieldpath and config key
