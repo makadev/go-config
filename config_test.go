@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/makadev/go-config"
@@ -85,4 +86,81 @@ func Test_NewConfig_NilData(t *testing.T) {
 	if !contains(err.Error(), "invalid config struct: config struct cannot be nil") {
 		t.Errorf("unexpected error message: %v", err)
 	}
+}
+
+func newTestConfig(t *testing.T) *config.Config[NewConfig_TestConfig] {
+	t.Helper()
+	cfg, err := config.NewConfig(nil, &NewConfig_TestConfig{AppName: "test"})
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+	return cfg
+}
+
+func Test_Config_LockUnlock(t *testing.T) {
+	cfg := newTestConfig(t)
+	cfg.Lock()
+	cfg.Data.AppName = "locked-write"
+	cfg.Unlock()
+	if cfg.Data.AppName != "locked-write" {
+		t.Errorf("expected AppName to be 'locked-write', got %q", cfg.Data.AppName)
+	}
+}
+
+func Test_Config_RLockRUnlock(t *testing.T) {
+	cfg := newTestConfig(t)
+	cfg.Data.AppName = "read-value"
+	cfg.RLock()
+	name := cfg.Data.AppName
+	cfg.RUnlock()
+	if name != "read-value" {
+		t.Errorf("expected AppName to be 'read-value', got %q", name)
+	}
+}
+
+func Test_Config_WithLock(t *testing.T) {
+	cfg := newTestConfig(t)
+	cfg.WithLock(func() {
+		cfg.Data.AppName = "with-lock"
+	})
+	if cfg.Data.AppName != "with-lock" {
+		t.Errorf("expected AppName to be 'with-lock', got %q", cfg.Data.AppName)
+	}
+}
+
+func Test_Config_WithRLock(t *testing.T) {
+	cfg := newTestConfig(t)
+	cfg.Data.AppName = "with-rlock"
+	var got string
+	cfg.WithRLock(func() {
+		got = cfg.Data.AppName
+	})
+	if got != "with-rlock" {
+		t.Errorf("expected AppName to be 'with-rlock', got %q", got)
+	}
+}
+
+func Test_Config_ConcurrentLocking(t *testing.T) {
+	cfg := newTestConfig(t)
+	cfg.Data.AppName = "initial"
+
+	const goroutines = 20
+	var wg sync.WaitGroup
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			if id%2 == 0 {
+				cfg.WithLock(func() {
+					cfg.Data.AppName = "writer"
+				})
+			} else {
+				cfg.WithRLock(func() {
+					_ = cfg.Data.AppName
+				})
+			}
+		}(i)
+	}
+	wg.Wait()
 }
