@@ -1,12 +1,15 @@
 package config_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/makadev/go-config"
+	"go.yaml.in/yaml/v3"
 )
 
 type Load_ServerConfig struct {
@@ -116,7 +119,7 @@ func Test_LoadConfig_MissingFilesAreIgnored(t *testing.T) {
 
 	data := &Load_ConfigData{
 		AppName: "default-name",
-		Server: Load_ServerConfig{Host: "127.0.0.1", Port: 5000},
+		Server:  Load_ServerConfig{Host: "127.0.0.1", Port: 5000},
 	}
 	cfg, err := config.NewConfig(opts, data)
 	if err != nil {
@@ -231,6 +234,75 @@ func Test_LoadConfig_InvalidFileContents(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tt.wantErrPart) {
 				t.Fatalf("expected error to contain %q, got %v", tt.wantErrPart, err)
+			}
+		})
+	}
+}
+
+func Test_LoadDump_RoundTripFixtures(t *testing.T) {
+	tests := []struct {
+		name      string
+		path      string
+		format    string
+		unmarshal func([]byte, interface{}) error
+	}{
+		{
+			name:      "json",
+			path:      "testdata/load.json",
+			format:    "json",
+			unmarshal: json.Unmarshal,
+		},
+		{
+			name:      "yaml",
+			path:      "testdata/load.yaml",
+			format:    "yaml",
+			unmarshal: yaml.Unmarshal,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalBytes, err := os.ReadFile(tt.path)
+			if err != nil {
+				t.Fatalf("failed to read fixture %s: %v", tt.path, err)
+			}
+
+			opts := config.NewOptions()
+			opts.SkipEnv = true
+			opts.ConfigPaths = []string{tt.path}
+
+			data := &Load_ConfigData{}
+			cfg, err := config.NewConfig(opts, data)
+			if err != nil {
+				t.Fatalf("failed to initialize config: %v", err)
+			}
+
+			if err := cfg.Load(); err != nil {
+				t.Fatalf("failed to load config: %v", err)
+			}
+
+			dumped, err := cfg.DumpWithOptions(&config.DumpOptions{
+				Format:      tt.format,
+				Content:     "config",
+				MaskSecrets: false,
+				MaskWith:    "***",
+			})
+			if err != nil {
+				t.Fatalf("failed to dump config in %s format: %v", tt.format, err)
+			}
+
+			var originalData map[string]interface{}
+			if err := tt.unmarshal(originalBytes, &originalData); err != nil {
+				t.Fatalf("failed to parse original %s fixture: %v", tt.format, err)
+			}
+
+			var roundTrippedData map[string]interface{}
+			if err := tt.unmarshal([]byte(dumped), &roundTrippedData); err != nil {
+				t.Fatalf("failed to parse dumped %s output: %v", tt.format, err)
+			}
+
+			if !reflect.DeepEqual(originalData, roundTrippedData) {
+				t.Fatalf("roundtrip mismatch\noriginal: %#v\ndumped:   %#v", originalData, roundTrippedData)
 			}
 		})
 	}
