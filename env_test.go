@@ -470,6 +470,63 @@ func Test_loadFromEnv_autoenv(t *testing.T) {
 	}
 }
 
+func Test_loadFromEnv_autoenv_struct_env_collision(t *testing.T) {
+	type NestedConfig struct {
+		Host string
+		Port int
+	}
+
+	type AppConfig struct {
+		Name   string
+		Nested NestedConfig
+	}
+
+	// Set env vars including one that collides with the struct-level name.
+	// Before the fix, APP_NESTED would be registered for the struct field and
+	// loadFromEnv would fail with "unsupported field type: struct".
+	envVars := map[string]string{
+		"APP_NAME":        "TestApp",
+		"APP_NESTED":      "should-be-ignored",
+		"APP_NESTED_HOST": "127.0.0.1",
+		"APP_NESTED_PORT": "8080",
+	}
+
+	for k, v := range envVars {
+		os.Setenv(k, v)
+	}
+
+	defer func() {
+		for k := range envVars {
+			os.Unsetenv(k)
+		}
+	}()
+
+	configData := &AppConfig{}
+	opts := config.NewOptions()
+	opts.EnvPrefix = "APP_"
+	opts.AutoEnv = true
+	cfg, err := config.NewConfig(opts, configData)
+	if err != nil {
+		t.Fatalf("failed to create config: %v", err)
+	}
+
+	cfg.Options.SkipFiles = true
+	err = cfg.Load()
+	if err != nil {
+		t.Fatalf("expected no error when struct-level env var is set, got: %v", err)
+	}
+
+	if configData.Name != "TestApp" {
+		t.Errorf("Name: expected %q, got %q", "TestApp", configData.Name)
+	}
+	if configData.Nested.Host != "127.0.0.1" {
+		t.Errorf("Nested.Host: expected %q, got %q", "127.0.0.1", configData.Nested.Host)
+	}
+	if configData.Nested.Port != 8080 {
+		t.Errorf("Nested.Port: expected %d, got %d", 8080, configData.Nested.Port)
+	}
+}
+
 // Additional test cases for different data types through the main interface
 func Test_loadFromEnv_different_types(t *testing.T) {
 	type TypeTestConfig struct {

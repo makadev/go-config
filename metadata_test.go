@@ -298,6 +298,72 @@ func Test_MetadataInit_AutoEnv(t *testing.T) {
 	}
 }
 
+func Test_MetadataInit_AutoEnv_SkipsStructFields(t *testing.T) {
+	type NestedConfig struct {
+		Host string `config:"host"`
+		Port int    `config:"port"`
+	}
+
+	initData := &struct {
+		Name   string        `config:"name"`
+		Server NestedConfig  `config:"server"`
+		PtrSrv *NestedConfig `config:"ptrsrv"`
+	}{}
+
+	opts := config.NewOptions()
+	opts.AutoEnv = true
+	cfg, err := config.NewConfig(opts, initData)
+
+	if err != nil {
+		t.Fatalf("failed to initialize config: %v", err)
+	}
+
+	// Leaf field should have auto-generated env var
+	if cfg.Metadata.FieldPathMap["Name"].EnvVar != "NAME" {
+		t.Fatalf("expected Name to have env var NAME, got %v", cfg.Metadata.FieldPathMap["Name"].EnvVar)
+	}
+
+	// Struct field should NOT have auto-generated env var
+	if cfg.Metadata.FieldPathMap["Server"].EnvVar != "" {
+		t.Fatalf("expected Server (struct) to have no env var, got %v", cfg.Metadata.FieldPathMap["Server"].EnvVar)
+	}
+
+	// Ptr-to-struct field should NOT have auto-generated env var
+	if cfg.Metadata.FieldPathMap["PtrSrv"].EnvVar != "" {
+		t.Fatalf("expected PtrSrv (ptr-to-struct) to have no env var, got %v", cfg.Metadata.FieldPathMap["PtrSrv"].EnvVar)
+	}
+
+	// Nested leaf fields should still have auto-generated env vars
+	if cfg.Metadata.FieldPathMap["Server.Host"].EnvVar != "SERVER_HOST" {
+		t.Fatalf("expected Server.Host to have env var SERVER_HOST, got %v", cfg.Metadata.FieldPathMap["Server.Host"].EnvVar)
+	}
+	if cfg.Metadata.FieldPathMap["Server.Port"].EnvVar != "SERVER_PORT" {
+		t.Fatalf("expected Server.Port to have env var SERVER_PORT, got %v", cfg.Metadata.FieldPathMap["Server.Port"].EnvVar)
+	}
+	if cfg.Metadata.FieldPathMap["PtrSrv.Host"].EnvVar != "PTRSRV_HOST" {
+		t.Fatalf("expected PtrSrv.Host to have env var PTRSRV_HOST, got %v", cfg.Metadata.FieldPathMap["PtrSrv.Host"].EnvVar)
+	}
+	if cfg.Metadata.FieldPathMap["PtrSrv.Port"].EnvVar != "PTRSRV_PORT" {
+		t.Fatalf("expected PtrSrv.Port to have env var PTRSRV_PORT, got %v", cfg.Metadata.FieldPathMap["PtrSrv.Port"].EnvVar)
+	}
+
+	// Struct-level env vars should NOT be in EnvMap
+	if _, ok := cfg.Metadata.EnvMap["SERVER"]; ok {
+		t.Fatal("expected SERVER not to be in EnvMap")
+	}
+	if _, ok := cfg.Metadata.EnvMap["PTRSRV"]; ok {
+		t.Fatal("expected PTRSRV not to be in EnvMap")
+	}
+
+	// Leaf-level env vars should be in EnvMap
+	if _, ok := cfg.Metadata.EnvMap["SERVER_HOST"]; !ok {
+		t.Fatal("expected SERVER_HOST to be in EnvMap")
+	}
+	if _, ok := cfg.Metadata.EnvMap["SERVER_PORT"]; !ok {
+		t.Fatal("expected SERVER_PORT to be in EnvMap")
+	}
+}
+
 func Test_MetadataInit_SkipEnv(t *testing.T) {
 	initData := &struct {
 		Field1 string  `config:"field1"`
