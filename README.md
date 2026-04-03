@@ -100,6 +100,10 @@ cfg.RUnlock()
 
 > **Deadlock warning:** Do **not** call any `Config` methods (`Load`, `Dump`, `Get*`, `Set*`, …) inside a `WithLock`/`WithRLock` callback or between `Lock`/`Unlock` (or `RLock`/`RUnlock`) calls. Those methods acquire the same mutex internally, and `sync.RWMutex` is not reentrant — doing so will deadlock.
 
+> **Race warning:** Mixing direct field access (`cfg.Data`, `cfg.Options`, `cfg.Metadata`) with concurrent method calls — without holding the lock — is a **data race**. Always use the helpers above, or the raw lock/unlock pairs, whenever you need to read or write exported fields from multiple goroutines.
+
+> **`Options` note:** `Config.Options` should be configured before the first `Load` call and not mutated afterwards. Changing `Options` fields while `Load` is running in another goroutine is not safe even with the locking helpers.
+
 ---
 
 ### File loading (YAML & JSON)
