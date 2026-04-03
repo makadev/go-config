@@ -296,8 +296,8 @@ type AppConfig struct {
 cfg, _ := config.NewConfig(config.NewOptions(), &AppConfig{Host: "localhost", Port: 8080, Password: "s3cr3t"})
 cfg.Load()
 
-// YAML (default via Dump)
-yamlOut, _ := cfg.Dump()
+// Table (default via Dump)
+tableOut, _ := cfg.Dump()
 
 // JSON
 jsonOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "json", Content: "config", MaskSecrets: true})
@@ -307,13 +307,11 @@ textOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "text", Content: "
 // host=localhost
 // port=8080
 
-// Tab-separated table
-tableOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "table", Content: "config", MaskSecrets: true})
-// CONFIG_KEY   VALUE       SECRET
-// ----------   -----       ------
-// host         localhost
-// port         8080
-// password     ***         yes
+// YAML
+yamlOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "yaml", Content: "config", MaskSecrets: true})
+// host: localhost
+// port: 8080
+// password: '***'
 ```
 
 `DumpEnv` is a convenience wrapper that dumps env var names → values as `ENV_VAR=value` lines:
