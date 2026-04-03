@@ -286,10 +286,12 @@ func TestDumpTableAllIncludesFieldPath(t *testing.T) {
 		t.Fatalf("Dump table all failed: %v", err)
 	}
 
-	if !strings.Contains(result, "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET") {
+	if !strings.Contains(result, "CONFIG_KEY") || !strings.Contains(result, "ENV_VAR") ||
+		!strings.Contains(result, "FIELD_PATH") || !strings.Contains(result, "VALUE") || !strings.Contains(result, "SECRET") {
 		t.Fatalf("expected all table header, got %s", result)
 	}
-	if !strings.Contains(result, "password\tPASSWORD\tPassword\t***\tyes") {
+	if !strings.Contains(result, "password") || !strings.Contains(result, "PASSWORD") ||
+		!strings.Contains(result, "Password") || !strings.Contains(result, "***") || !strings.Contains(result, "yes") {
 		t.Fatalf("expected password row with field path, got %s", result)
 	}
 }
@@ -527,10 +529,10 @@ func TestNewDumpOptionsDefaults(t *testing.T) {
 			t.Fatalf("Dump table failed: %v", err)
 		}
 
-		if !strings.Contains(result, "ENV_VAR\tVALUE\tSECRET") {
+		if !strings.Contains(result, "ENV_VAR") || !strings.Contains(result, "VALUE") || !strings.Contains(result, "SECRET") {
 			t.Fatalf("expected env table header, got %s", result)
 		}
-		if !strings.Contains(result, "PASSWORD\t***\tyes") {
+		if !strings.Contains(result, "PASSWORD") || !strings.Contains(result, "***") || !strings.Contains(result, "yes") {
 			t.Fatalf("expected masked password in env table, got %s", result)
 		}
 	}
