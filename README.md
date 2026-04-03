@@ -516,7 +516,7 @@ type Bad struct {
 }
 
 _, err := config.NewConfig(config.NewOptions(), &Bad{})
-fmt.Println(err) // invalid config struct: failed to list fields: duplicate config key "host" found
+fmt.Println(err) // failed to list fields: duplicate config key "host" found
 ```
 
 ---
