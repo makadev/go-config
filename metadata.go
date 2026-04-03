@@ -95,7 +95,10 @@ func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, 
 			if opts.AutoEnv {
 				// when autoenv is enabled, the "env" field overrides the automatic building
 				// otherwise the "env" field is build based on the full configkey like server.port -> "SERVER_PORT"
-				if envVar == "" {
+				// struct and ptr-to-struct fields are skipped since they are not leaf fields
+				isStruct := field.Type.Kind() == reflect.Struct ||
+					(field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct)
+				if envVar == "" && !isStruct {
 					envVar = env_prefix + strings.ToUpper(strings.ReplaceAll(configKey, ".", "_"))
 				}
 			} else {
