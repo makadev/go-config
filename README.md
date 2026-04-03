@@ -264,8 +264,10 @@ cfg.Load()
 
 output, _ := cfg.Dump() // Password appears as "***"
 fmt.Println(output)
-// password: '***'
-// host: localhost
+// CONFIG_KEY   VALUE       SECRET
+// ----------   -----       ------
+// host         localhost
+// password     ***         yes
 ```
 
 To reveal secrets in development (use with care):
@@ -285,8 +287,8 @@ output, _ := cfg.DumpWithOptions(&config.DumpOptions{
 `Dump` / `DumpWithOptions` support four output formats: `json`, `yaml`, `text` (key=value), and `table`.
 
 ```go
-// YAML (default via Dump)
-yamlOut, _ := cfg.Dump()
+// Table (default via Dump)
+tableOut, _ := cfg.Dump()
 
 // JSON
 jsonOut, _ := cfg.DumpWithOptions(&config.DumpOptions{Format: "json", Content: "config", MaskSecrets: true})
