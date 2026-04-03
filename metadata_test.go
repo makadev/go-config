@@ -82,8 +82,7 @@ func Test_MetadataInit_Simple(t *testing.T) {
 		cfg.Metadata.FieldPathMap["Field1"].FieldPath != "Field1" {
 		t.Fatal("expected Field1 to be initialized in FieldPathMap")
 	}
-	if cfg.Metadata.FieldPathMap["Field1"].ConfigKey != "field1" &&
-		cfg.Metadata.FieldPathMap["Field1"].ConfigName != "field1" {
+	if cfg.Metadata.FieldPathMap["Field1"].ConfigKey != "field1" {
 		t.Fatal("expected Field1.ConfigKey to be 'field1'")
 	}
 
@@ -95,8 +94,7 @@ func Test_MetadataInit_Simple(t *testing.T) {
 		cfg.Metadata.FieldPathMap["S1.Field3"].FieldPath != "S1.Field3" {
 		t.Fatal("expected S1.Field3 to be initialized in FieldPathMap")
 	}
-	if cfg.Metadata.FieldPathMap["S1.Field3"].ConfigKey != "s1.field3" &&
-		cfg.Metadata.FieldPathMap["S1.Field3"].ConfigName != "field3" {
+	if cfg.Metadata.FieldPathMap["S1.Field3"].ConfigKey != "s1.field3" {
 		t.Fatal("expected S1.Field3.ConfigKey to be 's1.field3'")
 	}
 
@@ -501,8 +499,7 @@ func Test_MetadataInit_FallbackNaming(t *testing.T) {
 		cfg.Metadata.FieldPathMap["Field1"].FieldPath != "Field1" {
 		t.Fatal("expected Field1 to be initialized in FieldPathMap")
 	}
-	if cfg.Metadata.FieldPathMap["Field1"].ConfigKey != "field1" &&
-		cfg.Metadata.FieldPathMap["Field1"].ConfigName != "field1" {
+	if cfg.Metadata.FieldPathMap["Field1"].ConfigKey != "field1" {
 		t.Fatal("expected Field1.ConfigKey to be 'field1'")
 	}
 }

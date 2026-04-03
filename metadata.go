@@ -17,10 +17,6 @@ type FieldInfo struct {
 	// f.e. "server.port"
 	ConfigKey string
 
-	// ConfigName is the key used in configuration files
-	// f.e. "port"
-	ConfigName string
-
 	// EnvVar is the environment variable name
 	EnvVar string
 
@@ -63,7 +59,7 @@ func getConfigName(opts *Options, field reflect.StructField) string {
 
 var (
 	EnvVarRE     = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]+$`)
-	ConfigNameRE = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	ConfigKeySegmentRE = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 )
 
 func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, path_prefix string, key_prefix string, env_prefix string) error {
@@ -78,8 +74,8 @@ func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, 
 		// Get config name
 		configName := getConfigName(opts, field)
 
-		if !ConfigNameRE.MatchString(configName) {
-			return fmt.Errorf("config name %q must match regex %q", configName, ConfigNameRE.String())
+		if !ConfigKeySegmentRE.MatchString(configName) {
+			return fmt.Errorf("config name %q must match regex %q", configName, ConfigKeySegmentRE.String())
 		}
 
 		// Create fieldpath and config key
@@ -126,7 +122,6 @@ func getStructMetadata(opts *Options, metadata *ConfigMetadata, t reflect.Type, 
 		fieldInfo := &FieldInfo{
 			FieldPath:   fieldPath,
 			ConfigKey:   configKey,
-			ConfigName:  configName,
 			EnvVar:      envVar,
 			Secret:      secret,
 			StructField: field,

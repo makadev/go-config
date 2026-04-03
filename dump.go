@@ -27,13 +27,12 @@ type DumpOptions struct {
 }
 
 type DumpEntry struct {
-	ConfigKey  string      `json:"config_key,omitempty"`
-	ConfigName string      `json:"config_name,omitempty"`
-	EnvVar     string      `json:"env_var,omitempty"`
-	FieldPath  string      `json:"field_path,omitempty"`
-	Value      interface{} `json:"value"`
-	IsSecret   bool        `json:"is_secret,omitempty"`
-	IsMasked   bool        `json:"is_masked,omitempty"`
+	ConfigKey string      `json:"config_key,omitempty"`
+	EnvVar    string      `json:"env_var,omitempty"`
+	FieldPath string      `json:"field_path,omitempty"`
+	Value     interface{} `json:"value"`
+	IsSecret  bool        `json:"is_secret,omitempty"`
+	IsMasked  bool        `json:"is_masked,omitempty"`
 }
 
 func NewDumpOptions() *DumpOptions {
@@ -113,7 +112,6 @@ func (c *Config[T]) collectDumpEntries(options *DumpOptions) ([]DumpEntry, error
 			}
 		case "metadata", "all":
 			entry.ConfigKey = fieldInfo.ConfigKey
-			entry.ConfigName = fieldInfo.ConfigName
 			entry.EnvVar = fieldInfo.EnvVar
 			if options.Content == "all" {
 				entry.FieldPath = fieldInfo.FieldPath
@@ -393,11 +391,11 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 		}
 	default:
 		if options.Content == "all" {
-			fmt.Fprintln(w, "CONFIG_KEY\tCONFIG_NAME\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET")
-			fmt.Fprintln(w, "----------\t-----------\t-------\t----------\t-----\t------")
+			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tFIELD_PATH\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-------\t----------\t-----\t------")
 		} else {
-			fmt.Fprintln(w, "CONFIG_KEY\tCONFIG_NAME\tENV_VAR\tVALUE\tSECRET")
-			fmt.Fprintln(w, "----------\t-----------\t-------\t-----\t------")
+			fmt.Fprintln(w, "CONFIG_KEY\tENV_VAR\tVALUE\tSECRET")
+			fmt.Fprintln(w, "----------\t-------\t-----\t------")
 		}
 
 		for _, entry := range entries {
@@ -411,11 +409,11 @@ func (c *Config[T]) formatTable(entries []DumpEntry, options *DumpOptions) (stri
 			}
 
 			if options.Content == "all" {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%v\t%s\n",
-					entry.ConfigKey, entry.ConfigName, entry.EnvVar, entry.FieldPath, val, secret)
-			} else {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%v\t%s\n",
-					entry.ConfigKey, entry.ConfigName, entry.EnvVar, val, secret)
+					entry.ConfigKey, entry.EnvVar, entry.FieldPath, val, secret)
+			} else {
+				fmt.Fprintf(w, "%s\t%s\t%v\t%s\n",
+					entry.ConfigKey, entry.EnvVar, val, secret)
 			}
 		}
 	}
