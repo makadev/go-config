@@ -575,3 +575,9 @@ for path, info := range cfg.Metadata.FieldPathMap {
     fmt.Printf("%s → config key: %s, env: %s\n", path, info.ConfigKey, info.EnvVar)
 }
 ```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
